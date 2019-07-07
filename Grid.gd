@@ -100,7 +100,7 @@ func arrange() -> void:
 			cell = _cells[i]
 			cell.xy = Vector2( x, y ) * resolution
 			cell.position = _offset + Vector2(x*cell_size.x,y*cell_size.y)
-			cell.get_child(0).rect_size = Vector2(cell_size.x,cell_size.y)
+			#cell.get_child(0).rect_size = Vector2(cell_size.x,cell_size.y)
 			i += 1
 	move(Vector2(0,0))
 
@@ -245,7 +245,7 @@ func auto_cell() -> void:
 					cell.xy = Vector2( tl.xy.x + cols, tl.xy.y + i ) * resolution
 					
 					cell.position = Vector2(tl.position.x+(cols*cell_size.x),tl.position.y+(i*cell_size.y))
-					cell.get_child(0).rect_size = Vector2(cell_size.x,cell_size.y)
+					#cell.get_child(0).rect_size = Vector2(cell_size.x,cell_size.y)
 					_cells.push_back(cell)
 				cols += 1
 
@@ -267,7 +267,7 @@ func auto_cell() -> void:
 					cell.xy = Vector2( tl.xy.x + i , tl.xy.y + rows ) * resolution
 					
 					cell.position = Vector2(tl.position.x+(i*cell_size.x),tl.position.y+(rows*cell_size.y))
-					cell.get_child(0).rect_size = Vector2(cell_size.x,cell_size.y)
+					#cell.get_child(0).rect_size = Vector2(cell_size.x,cell_size.y)
 					_cells.push_back(cell)
 				rows += 1
 		
