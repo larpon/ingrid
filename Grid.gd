@@ -5,7 +5,6 @@ var debug:= false
 # to avoid having to keep track of cell movement in the grid
 # and rely on sorting algorithms and index tracking instead.
 var _cells: Array = []
-var _buffer: Array = []
 
 var rows: int = 0
 var cols: int = 0
@@ -37,6 +36,11 @@ func _ready():
 	if debug: print(_id()+"::_ready")
 
 #func _process(delta): pass
+
+#func _notification(what):
+#	if what == NOTIFICATION_PREDELETE:
+#		clear()
+
 
 # The grid is considered 'valid' if no cells are spawning, the amount of cells
 # in the grid are more than 0 and equal to the total amount of cells needed
@@ -70,8 +74,7 @@ func init() -> void:
 	var res = ResourceLoader.load(delegate)
 	for i in range(cell_amount):
 		_on_cell_spawned(res.duplicate(),{})
-		#g.spawn(delegate,funcref(self, "_on_cell_spawned"),{})
-
+		
 func _on_cell_spawned(res,info) -> void:
 	if res == null: return
 	
@@ -80,7 +83,7 @@ func _on_cell_spawned(res,info) -> void:
 	_cells_spawning -= 1
 	#print(_id()+"::initializing"," ",_cells_spawning)
 	
-	if not is_instance_valid(self) or not g.is_valid(cell):
+	if not is_instance_valid(self) or not cell != null:
 		print(_id()+"::initializing"," bad cell",cell," ",_cells_spawning)
 		return
 	
@@ -293,7 +296,7 @@ func _on_resize() -> void:
 
 func clear() -> void:
 	if debug: print(_id()+str('::clear'))
-	g.clear_spawns()
+	
 	var cell
 	for cell in _cells:
 		if cell != null:
@@ -302,14 +305,6 @@ func clear() -> void:
 	rows = 0
 	cols = 0
 	_cells_spawning = 0
-
-func clear_buffer() -> void:
-	if debug: print(_id()+str('::clear_buffer'))
-	var cell
-	for cell in _buffer:
-		if cell != null:
-			cell.free()
-	_buffer.clear()
 
 """
 Helper functions
