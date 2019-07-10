@@ -113,8 +113,8 @@ func arrange() -> void:
 	move(Vector2(0,0))
 
 # Instantly 'warp' to this cell coordinate
-func warp_to(xy:Vector2) -> void:
-	if debug: print(_id()+"::warp_to"," ",xy)
+func warp(xy:Vector2) -> void:
+	if debug: print(_id()+"::warp"," ",xy)
 	var _xy:Vector2 = Vector2(xy.x - floor(cols/2), xy.y - floor(rows/2) )
 	
 	_cells.sort_custom(self, "_sort_by_position_y")
