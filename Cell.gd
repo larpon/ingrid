@@ -2,7 +2,7 @@ extends Node2D
 
 var xy := Vector2(0,0) setget set_xy
 
-signal swapped()
+#signal swapped()
 signal xy_changed(new, old)
 
 onready var grid := get_parent()

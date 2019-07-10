@@ -2,8 +2,6 @@ extends "./Cell.gd"
 
 var debug := true
 
-onready var grid = get_parent()
-
 func _id(): return str(xy)
 
 func _ready():
@@ -20,3 +18,8 @@ func _ready():
 
 func _process(delta):
 	if debug: get_node('ColorRect/Label').set_text(_id())
+
+#func _notification(what):
+#	if what == NOTIFICATION_PREDELETE:
+#		print("Cell",_id(),' ',self,'dying')
+

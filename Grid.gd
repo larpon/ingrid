@@ -38,10 +38,14 @@ func _ready():
 
 #func _process(delta): pass
 
+# The grid is considered 'valid' if no cells are spawning, the amount of cells
+# in the grid are more than 0 and equal to the total amount of cells needed
+# to fill the grid
 func valid() -> bool:
 	#print(_cells_spawning == 0, " ", _cells.size() > 0, " ", _cells.size() == rows*cols," (",_cells.size(),"==",rows*cols,")")
 	return _cells_spawning == 0 and _cells.size() > 0 and _cells.size() == rows*cols
 
+# (Re)initialize the grid with cells when called
 func init() -> void:
 	_update_fills()
 	_update_offset()
@@ -91,6 +95,7 @@ func _on_cell_spawned(res,info) -> void:
 	#if debug: print(_id()+str('::_on_cell_spawned'),' ','grid size ',len(grid))
 
 # Arrange cells from top-left to bottom-right, column major
+# Expects all cells to be done spawning
 func arrange() -> void:
 	if debug: print(_id()+str("::arrange")," ",valid())
 	_update_offset()
@@ -104,7 +109,7 @@ func arrange() -> void:
 			i += 1
 	move(Vector2(0,0))
 
-# Instantly go to this cell coordinate
+# Instantly 'warp' to this cell coordinate
 func warp_to(xy:Vector2) -> void:
 	if debug: print(_id()+"::warp_to"," ",xy)
 	var _xy:Vector2 = Vector2(xy.x - floor(cols/2), xy.y - floor(rows/2) )
@@ -144,7 +149,7 @@ func move(v : Vector2) -> void:
 	#if debug: print(_id()+str('::move'),' ','moving ',rows*cols,' cells relatively ',x,',',y)
 	var cell;
 	var nx: float; var ny: float
-	var swapped: bool = false
+	#var swapped: bool = false
 	
 	var limit_tl: Vector2 = $BoundsArea.rect_position
 	var limit_br: Vector2 = Vector2(limit_tl.x+$BoundsArea.rect_size.x-cell_size.x, limit_tl.y+$BoundsArea.rect_size.y-cell_size.y)
@@ -171,10 +176,10 @@ func move(v : Vector2) -> void:
 				swap.y -= rows* resolution.y
 				
 			cell.position += v
-			cell.xy = swap
+			cell.xy = swap # <- This uses Cell.set_xy, which will emit the swap signal (xy_changed)
 	emit_signal("moved",v)
 
-# Get cell at viewport x,y coordinate
+# Get cell at viewport (self.rect) x,y coordinate
 func cell(xy:Vector2):
 	var vp = self.rect_size
 	
@@ -187,7 +192,7 @@ func cell(xy:Vector2):
 				return cell
 	return null
 
-# Will ensure that the grid's viewport is filled with cells
+# Ensures that the grid's viewport is filled with cells
 func auto_cell() -> void:
 	if not valid(): return
 	
@@ -285,17 +290,7 @@ func auto_cell() -> void:
 func _on_resize() -> void:
 	if debug: print(_id(),"Resize")
 	auto_cell()
-	
-#func _notification(what):
-#	if what == NOTIFICATION_PREDELETE:
-#		if debug: print(_id(),' ','freeing all cells')
-#		for s in grid:
-#			s.free()
 
-#func _on_cell_dying(cell):
-	#pass
-	#if debug: print('cell ',cell._id(),' ','dying',len(grid))
-	
 func clear() -> void:
 	if debug: print(_id()+str('::clear'))
 	g.clear_spawns()
@@ -307,7 +302,7 @@ func clear() -> void:
 	rows = 0
 	cols = 0
 	_cells_spawning = 0
-	
+
 func clear_buffer() -> void:
 	if debug: print(_id()+str('::clear_buffer'))
 	var cell
@@ -316,6 +311,9 @@ func clear_buffer() -> void:
 			cell.free()
 	_buffer.clear()
 
+"""
+Helper functions
+"""
 func _update_fills():
 	var fill_box: Vector2 = Vector2(cell_size.x * 3, cell_size.y * 3)
 	var bounds_box: Vector2 = Vector2((fill_box.x+cell_size.x)*1.0,(fill_box.y+cell_size.y)*1.0)
@@ -335,12 +333,5 @@ func _update_offset() -> void:
 	_offset.y = -(((cols*cell_size.y)-(rect_size.y))/2)
 
 static func _sort_by_position_y(a, b) -> bool:
-	#var resy = a.position.y - b.position.y
-	#var resx = a.position.x - b.position.x
-	#if debug: print(a.position.y, " - ",b.position.y," = ",res)
 	if a.position.y == b.position.y: return a.position.x < b.position.x
 	return a.position.y < b.position.y
-
-static func _sort_by_position_x(a, b) -> bool:
-	if a.position.x == b.position.x: return a.position.y - b.position.y
-	return a.position.x - b.position.x
