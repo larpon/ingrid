@@ -58,8 +58,8 @@ func init() -> void:
 	_update_fills()
 	_update_offset()
 	
-	var w = int(_fill.size.x) # var w = int($FillArea.rect_size.x)
-	var h = int(_fill.size.y) # var h = int($FillArea.rect_size.y)
+	var w = int(_fill.size.x)
+	var h = int(_fill.size.y)
 	
 	clear()
 	
@@ -111,11 +111,14 @@ func arrange() -> void:
 			cell.xy = Vector2( x, y ) * units
 			cell.position = _offset + Vector2(x*cell_size.x,y*cell_size.y)
 			i += 1
+	_needs_sorting = true
 	move(Vector2(0,0))
 
 # Instantly 'warp' to this cell coordinate
 func warp(xy:Vector2) -> void:
 	var _xy:Vector2 = Vector2(xy.x - floor(cols/2), xy.y - floor(rows/2) )
+	
+	_sort_cells()
 	
 	var xmod = 0; var ymod = -1
 	var cell; var center
@@ -151,8 +154,8 @@ func move(v : Vector2) -> void:
 	var cell;
 	var nx: float; var ny: float
 	
-	var limit_tl: Vector2 = _bounds.position #$BoundsArea.rect_position
-	var limit_br: Vector2 = Vector2(limit_tl.x+_bounds.size.x-cell_size.x, limit_tl.y+_bounds.size.y-cell_size.y) #Vector2(limit_tl.x+$BoundsArea.rect_size.x-cell_size.x, limit_tl.y+$BoundsArea.rect_size.y-cell_size.y)
+	var limit_tl: Vector2 = _bounds.position
+	var limit_br: Vector2 = Vector2(limit_tl.x+_bounds.size.x-cell_size.x, limit_tl.y+_bounds.size.y-cell_size.y)
 	
 	_sort_if_needed()
 	
@@ -205,8 +208,8 @@ func _auto_fit_cells() -> void:
 	_update_fills()
 	_update_offset()
 	
-	var w = int(_fill.size.x) # var w = int($FillArea.rect_size.x)
-	var h = int(_fill.size.y) # var h = int($FillArea.rect_size.y)
+	var w = int(_fill.size.x)
+	var h = int(_fill.size.y)
 	
 	var __cols: int = ceil(w/cell_size.x)
 	var __rows: int = ceil(h/cell_size.y)
@@ -230,7 +233,8 @@ func _auto_fit_cells() -> void:
 		
 		if cell_amount > 0:
 			res = ResourceLoader.load(delegate)
-		
+			
+		# TODO bug on removing more than 1 per call
 		if col_amount < 0:
 			for j in range(0,abs(col_amount)):
 				var index: int = 0; var ei:int = 0
@@ -333,5 +337,8 @@ static func _sort_by_position_y(a, b) -> bool:
 
 func _sort_if_needed():
 	if _needs_sorting:
-		_cells.sort_custom(self, "_sort_by_position_y")
+		_sort_cells()
 		_needs_sorting = false
+
+func _sort_cells():
+	_cells.sort_custom(self, "_sort_by_position_y")
