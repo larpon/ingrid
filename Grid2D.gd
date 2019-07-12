@@ -1,6 +1,21 @@
 extends ColorRect
 
-var debug:= false
+# Public members
+
+# Units or resolution of the cell coordinates
+var units:Vector2 = Vector2(1,1)
+
+# Default cell size w,h
+var cell_size: Vector2 = OS.window_size * Vector2(0.5,0.5)
+# Will keep cell fill rate when grid is resized
+var auto_fit_cells: bool = true
+# The scene that will be instanced per cell in the grid
+# A cell delegate should always derrive from Node2D
+# and have members: xy:Vector2
+var delegate: String = "./Cell.tscn"
+
+# Private members
+
 # The cells that make up the grid. We use a 1d array structure
 # to avoid having to keep track of cell movement in the grid
 # and rely on sorting algorithms and index tracking instead.
@@ -9,44 +24,33 @@ var _cells: Array = []
 var rows: int = 0
 var cols: int = 0
 
-var resolution:Vector2 = Vector2(1,1)
-
-# Default cell size w,h
-var cell_size: Vector2 = OS.window_size * Vector2(0.5,0.5)
-var fill_on_resize: bool = true
-
-var __cell_delegate: PackedScene = preload("./Cell.tscn")
-# The scene that will be instanced per cell in the grid
-# A cell delegate should always derrive from Node2D
-# and have members: xy:Vector2
-var delegate: String = "./Cell.tscn"
+# Currently only here to allow the engine to preload
+var _cell_delegate: PackedScene = preload("./Cell.tscn")
 
 # Current amount of cells spawning
 var _cells_spawning: int = 0
+
 # Offset coordinates for centering the grid in the viewport
 var _offset: Vector2 = Vector2(0,0)
+
+var _fill: Rect2 = Rect2(self.rect_position,self.rect_size)
+var _bounds: Rect2 = Rect2(self.rect_position,self.rect_size)
+
+# Small optimization to indicate if we actually need to sort the _cells
+var _needs_sorting: bool = false
+
+# Signals
 
 signal initialized
 signal moved(v)
 
-func _id(): return "Grid"
-
 func _ready():
 	connect("resized",self,"_on_resize")
-	if debug: print(_id()+"::_ready")
-
-#func _process(delta): pass
-
-#func _notification(what):
-#	if what == NOTIFICATION_PREDELETE:
-#		clear()
-
 
 # The grid is considered 'valid' if no cells are spawning, the amount of cells
 # in the grid are more than 0 and equal to the total amount of cells needed
 # to fill the grid
 func valid() -> bool:
-	#print(_cells_spawning == 0, " ", _cells.size() > 0, " ", _cells.size() == rows*cols," (",_cells.size(),"==",rows*cols,")")
 	return _cells_spawning == 0 and _cells.size() > 0 and _cells.size() == rows*cols
 
 # (Re)initialize the grid with cells when called
@@ -54,8 +58,8 @@ func init() -> void:
 	_update_fills()
 	_update_offset()
 	
-	var w = int($FillArea.rect_size.x)
-	var h = int($FillArea.rect_size.y)
+	var w = int(_fill.size.x) # var w = int($FillArea.rect_size.x)
+	var h = int(_fill.size.y) # var h = int($FillArea.rect_size.y)
 	
 	clear()
 	
@@ -68,8 +72,8 @@ func init() -> void:
 	_cells.resize(cell_amount)
 	_cells_spawning = cell_amount
 	
-	if debug: print(_id()+str("::init"),' spawn ',cols,'x',rows,'=',cell_amount, ' cells',' in a ',w,'x',h," rectangle",
-	' cell size ',cell_size,' start pos ',$FillArea.rect_position," Viewport",self.rect_size)
+	#if debug: print("Grid2D::init"),' spawn ',cols,'x',rows,'=',cell_amount, ' cells',' in a ',w,'x',h," rectangle",
+	#' cell size ',cell_size,' start pos ',$FillArea.rect_position," Viewport",self.rect_size)
 	
 	var res = ResourceLoader.load(delegate)
 	for i in range(cell_amount):
@@ -81,10 +85,9 @@ func _on_cell_spawned(res,info) -> void:
 	var cell = res.instance()
 	
 	_cells_spawning -= 1
-	#print(_id()+"::initializing"," ",_cells_spawning)
 	
 	if not is_instance_valid(self) or not cell != null:
-		print(_id()+"::initializing"," bad cell",cell," ",_cells_spawning)
+		print("Grid2D ERROR Bad cell ",cell," ",_cells_spawning)
 		return
 	
 	# Add it to the grid
@@ -93,31 +96,26 @@ func _on_cell_spawned(res,info) -> void:
 	_cells[_cells_spawning] = cell
 	if _cells_spawning == 0:
 		arrange()
-		if debug: print(_id()+str("::initialized"))
 		emit_signal("initialized")
-	#if debug: print(_id()+str('::_on_cell_spawned'),' ','grid size ',len(grid))
 
 # Arrange cells from top-left to bottom-right, column major
 # Expects all cells to be done spawning
 func arrange() -> void:
-	if debug: print(_id()+str("::arrange")," ",valid())
+	if not valid(): return
+	
 	_update_offset()
 	var i: int = 0; var cell = null
 	for x in range(0,cols):
 		for y in range(0,rows):
 			cell = _cells[i]
-			cell.xy = Vector2( x, y ) * resolution
+			cell.xy = Vector2( x, y ) * units
 			cell.position = _offset + Vector2(x*cell_size.x,y*cell_size.y)
-			#cell.get_child(0).rect_size = Vector2(cell_size.x,cell_size.y)
 			i += 1
 	move(Vector2(0,0))
 
 # Instantly 'warp' to this cell coordinate
 func warp(xy:Vector2) -> void:
-	if debug: print(_id()+"::warp"," ",xy)
 	var _xy:Vector2 = Vector2(xy.x - floor(cols/2), xy.y - floor(rows/2) )
-	
-	_cells.sort_custom(self, "_sort_by_position_y")
 	
 	var xmod = 0; var ymod = -1
 	var cell; var center
@@ -126,7 +124,7 @@ func warp(xy:Vector2) -> void:
 			xmod = 0
 			ymod += 1
 		cell = _cells[i]
-		cell.xy = Vector2( _xy.x + xmod, _xy.y + ymod ) * resolution
+		cell.xy = Vector2( _xy.x + xmod, _xy.y + ymod ) * units
 		
 		if cell.xy == xy:
 			center = cell
@@ -134,9 +132,9 @@ func warp(xy:Vector2) -> void:
 
 	# Center in view
 	var c_pos = center.position
-	if debug: print(c_pos)
-	var x = (-c_pos.x if c_pos.x > 0 else c_pos.x) #+ (rect_size.x*0.5) - (cell_size.x*0.5)
-	var y = (c_pos.y if c_pos.y < 0 else -c_pos.y) #+ (rect_size.y*0.5) - (cell_size.y*0.5)
+	
+	var x = (-c_pos.x if c_pos.x > 0 else c_pos.x)
+	var y = (c_pos.y if c_pos.y < 0 else -c_pos.y)
 	
 	if cell_size.x > rect_size.x: x = x * -1
 	if cell_size.y > rect_size.y: y = y * -1
@@ -149,13 +147,14 @@ func warp(xy:Vector2) -> void:
 # Move all cells relativly by 'v'
 func move(v : Vector2) -> void:
 	if not valid(): return
-	#if debug: print(_id()+str('::move'),' ','moving ',rows*cols,' cells relatively ',x,',',y)
+	
 	var cell;
 	var nx: float; var ny: float
-	#var swapped: bool = false
 	
-	var limit_tl: Vector2 = $BoundsArea.rect_position
-	var limit_br: Vector2 = Vector2(limit_tl.x+$BoundsArea.rect_size.x-cell_size.x, limit_tl.y+$BoundsArea.rect_size.y-cell_size.y)
+	var limit_tl: Vector2 = _bounds.position #$BoundsArea.rect_position
+	var limit_br: Vector2 = Vector2(limit_tl.x+_bounds.size.x-cell_size.x, limit_tl.y+_bounds.size.y-cell_size.y) #Vector2(limit_tl.x+$BoundsArea.rect_size.x-cell_size.x, limit_tl.y+$BoundsArea.rect_size.y-cell_size.y)
+	
+	_sort_if_needed()
 	
 	var swap: Vector2
 	for cell in _cells:
@@ -167,16 +166,20 @@ func move(v : Vector2) -> void:
 			swap = Vector2(cell.xy.x,cell.xy.y)
 			if nx < limit_tl.x:
 				cell.position.x = cell.position.x + (cols*cell_size.x)
-				swap.x += cols* resolution.x
+				swap.x += cols* units.x
+				_needs_sorting = true
 			if ny < limit_tl.y:
 				cell.position.y = cell.position.y + (rows*cell_size.y)
-				swap.y += rows* resolution.y
+				swap.y += rows* units.y
+				_needs_sorting = true
 			if nx > limit_br.x:
 				cell.position.x = cell.position.x - (cols*cell_size.x)
-				swap.x -= cols* resolution.x
+				swap.x -= cols* units.x
+				_needs_sorting = true
 			if ny > limit_br.y:
 				cell.position.y = cell.position.y - (rows*cell_size.y)
-				swap.y -= rows* resolution.y
+				swap.y -= rows* units.y
+				_needs_sorting = true
 				
 			cell.position += v
 			cell.xy = swap # <- This uses Cell.set_xy, which will emit the swap signal (xy_changed)
@@ -196,37 +199,38 @@ func cell(xy:Vector2):
 	return null
 
 # Ensures that the grid's viewport is filled with cells
-func auto_cell() -> void:
+func _auto_fit_cells() -> void:
 	if not valid(): return
 	
 	_update_fills()
 	_update_offset()
 	
-	var w: int = int($FillArea.rect_size.x)
-	var h: int = int($FillArea.rect_size.y)
+	var w = int(_fill.size.x) # var w = int($FillArea.rect_size.x)
+	var h = int(_fill.size.y) # var h = int($FillArea.rect_size.y)
 	
-	var _cols: int = ceil(w/cell_size.x)
-	var _rows: int = ceil(h/cell_size.y)
+	var __cols: int = ceil(w/cell_size.x)
+	var __rows: int = ceil(h/cell_size.y)
 	
-	var cell_amount: int = _rows * _cols - rows * cols
+	var cell_amount: int = __rows * __cols - rows * cols
 	
-	var col_amount: int = _cols - cols
-	var row_amount: int = _rows - rows
+	var col_amount: int = __cols - cols
+	var row_amount: int = __rows - rows
 	
-	#if debug: print(_id()+str("::fix"),' spawn ',_cols,'x',_rows,'=',cell_amount, ' cells',' in ',row_amount,' rows and ',col_amount," columns",
+	#if debug: print("Grid2D::_auto_fit_cells",' spawn ',__cols,'x',__rows,'=',cell_amount, ' cells',' in ',row_amount,' rows and ',col_amount," columns",
 	#' in a ',w,'x',h," rectangle",
 	#' cell size ',cell_size,' start pos ',$FillArea.rect_position," Viewport",self.rect_size)
 	
 	if abs(cell_amount) > 0:
 		var cell; var res
-		_cells.sort_custom(self, "_sort_by_position_y")
+		
+		_sort_if_needed()
+		
 		var tl = _cells[0]
 		_cells_spawning = cell_amount
 		
 		if cell_amount > 0:
 			res = ResourceLoader.load(delegate)
 		
-		# TODO bug on removing more than 1
 		if col_amount < 0:
 			for j in range(0,abs(col_amount)):
 				var index: int = 0; var ei:int = 0
@@ -250,10 +254,10 @@ func auto_cell() -> void:
 					
 					add_child(cell)
 					
-					cell.xy = Vector2( tl.xy.x + cols, tl.xy.y + i ) * resolution
+					cell.xy = Vector2( tl.xy.x + cols, tl.xy.y + i ) * units
 					
 					cell.position = Vector2(tl.position.x+(cols*cell_size.x),tl.position.y+(i*cell_size.y))
-					#cell.get_child(0).rect_size = Vector2(cell_size.x,cell_size.y)
+					
 					_cells.push_back(cell)
 				cols += 1
 
@@ -272,31 +276,26 @@ func auto_cell() -> void:
 					
 					add_child(cell)
 					
-					cell.xy = Vector2( tl.xy.x + i , tl.xy.y + rows ) * resolution
-					
+					cell.xy = Vector2( tl.xy.x + i , tl.xy.y + rows ) * units
 					cell.position = Vector2(tl.position.x+(i*cell_size.x),tl.position.y+(rows*cell_size.y))
-					#cell.get_child(0).rect_size = Vector2(cell_size.x,cell_size.y)
+					
 					_cells.push_back(cell)
 				rows += 1
-		
-		_cells.sort_custom(self, "_sort_by_position_y")
-		
+
+		_needs_sorting = true
 		_update_fills()
 		_update_offset()
 		
-		#if debug: print(_id()+str("::fix"),' layout ',_cols,'x',_rows,'=',cell_amount, ' cells',
+		#if debug: print("Grid2D::_auto_fit_cells",' layout ',__cols,'x',__rows,'=',cell_amount, ' cells',
 		#' in ',row_amount,' rows and ',col_amount," columns",
 		#' in a ',w,'x',h," rectangle")
 		
 		assert( rows * cols >= 4 )
 
 func _on_resize() -> void:
-	if debug: print(_id(),"Resize")
-	auto_cell()
+	if auto_fit_cells: _auto_fit_cells()
 
 func clear() -> void:
-	if debug: print(_id()+str('::clear'))
-	
 	var cell
 	for cell in _cells:
 		if cell != null:
@@ -305,6 +304,7 @@ func clear() -> void:
 	rows = 0
 	cols = 0
 	_cells_spawning = 0
+	_needs_sorting = false
 
 """
 Helper functions
@@ -317,11 +317,11 @@ func _update_fills():
 	var fill_area = rect.grow_individual(fill_box.x,fill_box.y,fill_box.x,fill_box.y)
 	var bounds_area = rect.grow_individual(bounds_box.x,bounds_box.y,bounds_box.x,bounds_box.y)
 	
-	$FillArea.rect_position = fill_area.position
-	$FillArea.rect_size = fill_area.size
+	_fill.position = fill_area.position
+	_fill.size = fill_area.size
 	
-	$BoundsArea.rect_position = bounds_area.position
-	$BoundsArea.rect_size = bounds_area.size
+	_bounds.position = bounds_area.position
+	_bounds.size = bounds_area.size
 
 func _update_offset() -> void:
 	_offset.x = -(((rows*cell_size.x)-(rect_size.x))/2)
@@ -330,3 +330,8 @@ func _update_offset() -> void:
 static func _sort_by_position_y(a, b) -> bool:
 	if a.position.y == b.position.y: return a.position.x < b.position.x
 	return a.position.y < b.position.y
+
+func _sort_if_needed():
+	if _needs_sorting:
+		_cells.sort_custom(self, "_sort_by_position_y")
+		_needs_sorting = false
