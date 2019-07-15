@@ -3,7 +3,7 @@ extends ColorRect
 # Public members
 
 # Units or resolution of the cell coordinates
-var units:Vector2 = Vector2(1,1)
+var units: Vector2 = Vector2(1,1)
 
 # Default cell size w,h
 var cell_size: Vector2 = OS.window_size * Vector2(0.5,0.5)
@@ -36,8 +36,6 @@ var _offset: Vector2 = Vector2(0,0)
 var _fill: Rect2 = Rect2(self.rect_position,self.rect_size)
 var _bounds: Rect2 = Rect2(self.rect_position,self.rect_size)
 
-# Small optimization to indicate if we actually need to sort the _cells
-var _needs_sorting: bool = false
 
 # Signals
 
@@ -78,7 +76,7 @@ func init() -> void:
 	var res = ResourceLoader.load(delegate)
 	for i in range(cell_amount):
 		_on_cell_spawned(res.duplicate(),{})
-		
+	
 func _on_cell_spawned(res,info) -> void:
 	if res == null: return
 	
@@ -111,11 +109,14 @@ func arrange() -> void:
 			cell.xy = Vector2( x, y ) * units
 			cell.position = _offset + Vector2(x*cell_size.x,y*cell_size.y)
 			i += 1
-	_needs_sorting = true
+	#_sort_cells()
 	move(Vector2(0,0))
 
 # Instantly 'warp' to this cell coordinate
+var __dbg_calls = 0
 func warp(xy:Vector2) -> void:
+	if not valid(): return
+	
 	var _xy:Vector2 = Vector2(xy.x - floor(cols/2), xy.y - floor(rows/2) )
 	
 	_sort_cells()
@@ -124,8 +125,8 @@ func warp(xy:Vector2) -> void:
 	var cell; var center
 	for i in range(0, _cells.size()):
 		if i % cols == 0:
-			xmod = 0
-			ymod += 1
+			xmod = 0; ymod += 1
+		
 		cell = _cells[i]
 		cell.xy = Vector2( _xy.x + xmod, _xy.y + ymod ) * units
 		
@@ -133,7 +134,7 @@ func warp(xy:Vector2) -> void:
 			center = cell
 		xmod += 1
 
-	# Center in view
+	# Center in grid
 	var c_pos = center.position
 	
 	var x = (-c_pos.x if c_pos.x > 0 else c_pos.x)
@@ -149,43 +150,92 @@ func warp(xy:Vector2) -> void:
 
 # Move all cells relativly by 'v'
 func move(v : Vector2) -> void:
+	
 	if not valid(): return
 	
 	var cell;
 	var nx: float; var ny: float
 	
+	var update := false
+	
 	var limit_tl: Vector2 = _bounds.position
 	var limit_br: Vector2 = Vector2(limit_tl.x+_bounds.size.x-cell_size.x, limit_tl.y+_bounds.size.y-cell_size.y)
 	
-	_sort_if_needed()
 	
+	var jumps_x :int = 0
+	var jumps_y :int = 0
+	var rest_x :float = 0.0
+	var rest_y :float = 0.0
+	
+	if v.x < 0:
+		jumps_x = ceil(v.x/cell_size.x)
+		rest_x = fmod(v.x,cell_size.x)
+	elif v.x > 0:
+		jumps_x = floor(v.x/cell_size.x)
+		rest_x = fmod(v.x,cell_size.x)
+	if v.y < 0:
+		jumps_y = ceil(v.y/cell_size.y)
+		rest_y = fmod(v.y,cell_size.y)
+	elif v.y > 0:
+		jumps_y = floor(v.y/cell_size.y)
+		rest_y = fmod(v.y,cell_size.y)
+	
+	if abs(jumps_x) > 1 or abs(jumps_y) > 1:
+		print(self.name,' jumps ',jumps_x,',',jumps_y,' rem ',Vector2(rest_x,rest_y))
+		if jumps_x > 0:
+			v.x -= abs(jumps_x * cell_size.x) + rest_x
+		elif jumps_x < 0:
+			v.x += abs(jumps_x * cell_size.x) - rest_x
+		
+		if jumps_y > 0:
+			v.y -= abs(jumps_y * cell_size.y) + rest_y
+		elif jumps_y < 0:
+			v.y += abs(jumps_y * cell_size.y) - rest_y
+		
+		for cell in _cells:
+			if cell != null:
+				cell.xy += Vector2(jumps_x,jumps_y)
+	
+	var had_updates = false
 	var swap: Vector2
 	for cell in _cells:
 		if cell != null:
+			
+			update = false
+			
+			#if abs(v.x) > cell_size.x or abs(v.y) > cell_size.y:
+			#	print('Warning trying to move more that cell_size',v)
+			
 			# Check if new position will be outside of bounding box
 			nx = cell.position.x + v.x
 			ny = cell.position.y + v.y
 			
-			swap = Vector2(cell.xy.x,cell.xy.y)
+			swap = cell.xy
+			
 			if nx < limit_tl.x:
-				cell.position.x = cell.position.x + (cols*cell_size.x)
-				swap.x += cols* units.x
-				_needs_sorting = true
-			if ny < limit_tl.y:
-				cell.position.y = cell.position.y + (rows*cell_size.y)
-				swap.y += rows* units.y
-				_needs_sorting = true
-			if nx > limit_br.x:
-				cell.position.x = cell.position.x - (cols*cell_size.x)
-				swap.x -= cols* units.x
-				_needs_sorting = true
-			if ny > limit_br.y:
-				cell.position.y = cell.position.y - (rows*cell_size.y)
-				swap.y -= rows* units.y
-				_needs_sorting = true
+				cell.position.x = cell.position.x + (cols * cell_size.x)
+				swap.x = cell.xy.x + (cols * units.x)
+				update = true
+			elif ny < limit_tl.y:
+				cell.position.y = cell.position.y + (rows * cell_size.y)
+				swap.y = cell.xy.y + (rows * units.y)
+				update = true
+			elif nx > limit_br.x:
+				cell.position.x = cell.position.x - (cols * cell_size.x)
+				swap.x = cell.xy.x - (cols * units.x)
+				update = true
+			elif ny > limit_br.y:
+				cell.position.y = cell.position.y - (rows * cell_size.y)
+				swap.y = cell.xy.y - (rows * units.y)
+				update = true
 				
 			cell.position += v
-			cell.xy = swap # <- This uses Cell.set_xy, which will emit the swap signal (xy_changed)
+			if update:
+				had_updates = true
+				cell.xy = swap # <- This uses Cell.set_xy, which will emit the swap signal (xy_changed)
+				update = false
+	if had_updates:
+		_sort_cells()
 	emit_signal("moved",v)
 
 # Get cell at viewport (self.rect) x,y coordinate
@@ -226,7 +276,7 @@ func _auto_fit_cells() -> void:
 	if abs(cell_amount) > 0:
 		var cell; var res
 		
-		_sort_if_needed()
+		_sort_cells()
 		
 		var tl = _cells[0]
 		_cells_spawning = cell_amount
@@ -286,7 +336,8 @@ func _auto_fit_cells() -> void:
 					_cells.push_back(cell)
 				rows += 1
 
-		_needs_sorting = true
+		_sort_cells()
+		
 		_update_fills()
 		_update_offset()
 		
@@ -308,10 +359,9 @@ func clear() -> void:
 	rows = 0
 	cols = 0
 	_cells_spawning = 0
-	_needs_sorting = false
 
 """
-Helper functions
+Utility functions
 """
 func _update_fills():
 	var fill_box: Vector2 = Vector2(cell_size.x * 3, cell_size.y * 3)
@@ -335,10 +385,10 @@ static func _sort_by_position_y(a, b) -> bool:
 	if a.position.y == b.position.y: return a.position.x < b.position.x
 	return a.position.y < b.position.y
 
-func _sort_if_needed():
-	if _needs_sorting:
-		_sort_cells()
-		_needs_sorting = false
-
 func _sort_cells():
 	_cells.sort_custom(self, "_sort_by_position_y")
+	
+	#if visible:
+	#	for cell in _cells:
+	#		if cell != null:
+	#			print(cell.position)
