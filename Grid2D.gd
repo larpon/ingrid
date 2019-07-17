@@ -153,6 +153,7 @@ func move(v : Vector2) -> void:
 	
 	if not valid(): return
 	
+	var vc := Vector2(v.x,v.y)
 	var cell;
 	var nx: float; var ny: float
 	
@@ -161,40 +162,41 @@ func move(v : Vector2) -> void:
 	var limit_tl: Vector2 = _bounds.position
 	var limit_br: Vector2 = Vector2(limit_tl.x+_bounds.size.x-cell_size.x, limit_tl.y+_bounds.size.y-cell_size.y)
 	
-	
+	"""
 	var jumps_x :int = 0
 	var jumps_y :int = 0
 	var rest_x :float = 0.0
 	var rest_y :float = 0.0
 	
-	if v.x < 0:
-		jumps_x = ceil(v.x/cell_size.x)
-		rest_x = fmod(v.x,cell_size.x)
-	elif v.x > 0:
-		jumps_x = floor(v.x/cell_size.x)
-		rest_x = fmod(v.x,cell_size.x)
-	if v.y < 0:
-		jumps_y = ceil(v.y/cell_size.y)
-		rest_y = fmod(v.y,cell_size.y)
-	elif v.y > 0:
-		jumps_y = floor(v.y/cell_size.y)
-		rest_y = fmod(v.y,cell_size.y)
+	if vc.x < 0:
+		jumps_x = ceil(vc.x/cell_size.x)
+		rest_x = fmod(vc.x,cell_size.x)
+	elif vc.x > 0:
+		jumps_x = floor(vc.x/cell_size.x)
+		rest_x = fmod(vc.x,cell_size.x)
+	if vc.y < 0:
+		jumps_y = ceil(vc.y/cell_size.y)
+		rest_y = fmod(vc.y,cell_size.y)
+	elif vc.y > 0:
+		jumps_y = floor(vc.y/cell_size.y)
+		rest_y = fmod(vc.y,cell_size.y)
 	
 	if abs(jumps_x) > 1 or abs(jumps_y) > 1:
-		print(self.name,' jumps ',jumps_x,',',jumps_y,' rem ',Vector2(rest_x,rest_y))
+		print(self.name,' jumps ',jumps_x,',',jumps_y,' rem ',Vector2(rest_x,rest_y),' cell size ',cell_size)
 		if jumps_x > 0:
-			v.x -= abs(jumps_x * cell_size.x) + rest_x
+			vc.x += abs(jumps_x * cell_size.x) + rest_x
 		elif jumps_x < 0:
-			v.x += abs(jumps_x * cell_size.x) - rest_x
+			vc.x -= abs(jumps_x * cell_size.x) + rest_x
 		
 		if jumps_y > 0:
-			v.y -= abs(jumps_y * cell_size.y) + rest_y
+			vc.y += abs(jumps_y * cell_size.y) + rest_y
 		elif jumps_y < 0:
-			v.y += abs(jumps_y * cell_size.y) - rest_y
+			vc.y -= abs(jumps_y * cell_size.y) + rest_y
 		
 		for cell in _cells:
 			if cell != null:
 				cell.xy += Vector2(jumps_x,jumps_y)
+	"""
 	
 	var had_updates = false
 	var swap: Vector2
@@ -210,7 +212,7 @@ func move(v : Vector2) -> void:
 			nx = cell.position.x + v.x
 			ny = cell.position.y + v.y
 			
-			swap = cell.xy
+			swap = Vector2(cell.xy.x,cell.xy.y)
 			
 			if nx < limit_tl.x:
 				cell.position.x = cell.position.x + (cols * cell_size.x)
@@ -229,7 +231,7 @@ func move(v : Vector2) -> void:
 				swap.y = cell.xy.y - (rows * units.y)
 				update = true
 				
-			cell.position += v
+			cell.position += vc
 			if update:
 				had_updates = true
 				cell.xy = swap # <- This uses Cell.set_xy, which will emit the swap signal (xy_changed)
