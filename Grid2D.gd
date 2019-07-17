@@ -162,42 +162,6 @@ func move(v : Vector2) -> void:
 	var limit_tl: Vector2 = _bounds.position
 	var limit_br: Vector2 = Vector2(limit_tl.x+_bounds.size.x-cell_size.x, limit_tl.y+_bounds.size.y-cell_size.y)
 	
-	"""
-	var jumps_x :int = 0
-	var jumps_y :int = 0
-	var rest_x :float = 0.0
-	var rest_y :float = 0.0
-	
-	if vc.x < 0:
-		jumps_x = ceil(vc.x/cell_size.x)
-		rest_x = fmod(vc.x,cell_size.x)
-	elif vc.x > 0:
-		jumps_x = floor(vc.x/cell_size.x)
-		rest_x = fmod(vc.x,cell_size.x)
-	if vc.y < 0:
-		jumps_y = ceil(vc.y/cell_size.y)
-		rest_y = fmod(vc.y,cell_size.y)
-	elif vc.y > 0:
-		jumps_y = floor(vc.y/cell_size.y)
-		rest_y = fmod(vc.y,cell_size.y)
-	
-	if abs(jumps_x) > 1 or abs(jumps_y) > 1:
-		print(self.name,' jumps ',jumps_x,',',jumps_y,' rem ',Vector2(rest_x,rest_y),' cell size ',cell_size)
-		if jumps_x > 0:
-			vc.x += abs(jumps_x * cell_size.x) + rest_x
-		elif jumps_x < 0:
-			vc.x -= abs(jumps_x * cell_size.x) + rest_x
-		
-		if jumps_y > 0:
-			vc.y += abs(jumps_y * cell_size.y) + rest_y
-		elif jumps_y < 0:
-			vc.y -= abs(jumps_y * cell_size.y) + rest_y
-		
-		for cell in _cells:
-			if cell != null:
-				cell.xy += Vector2(jumps_x,jumps_y)
-	"""
-	
 	var had_updates = false
 	var swap: Vector2
 	for cell in _cells:
