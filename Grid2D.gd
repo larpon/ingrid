@@ -153,7 +153,6 @@ func move(v : Vector2) -> void:
 	
 	if not valid(): return
 	
-	var vc := Vector2(v.x,v.y)
 	var cell;
 	var nx: float; var ny: float
 	
@@ -162,15 +161,12 @@ func move(v : Vector2) -> void:
 	var limit_tl: Vector2 = _bounds.position
 	var limit_br: Vector2 = Vector2(limit_tl.x+_bounds.size.x-cell_size.x, limit_tl.y+_bounds.size.y-cell_size.y)
 	
-	var had_updates = false
+	var do_sort = false
 	var swap: Vector2
 	for cell in _cells:
 		if cell != null:
 			
 			update = false
-			
-			#if abs(v.x) > cell_size.x or abs(v.y) > cell_size.y:
-			#	print('Warning trying to move more that cell_size',v)
 			
 			# Check if new position will be outside of bounding box
 			nx = cell.position.x + v.x
@@ -195,12 +191,12 @@ func move(v : Vector2) -> void:
 				swap.y = cell.xy.y - (rows * units.y)
 				update = true
 				
-			cell.position += vc
+			cell.position += v
 			if update:
-				had_updates = true
+				do_sort = true
 				cell.xy = swap # <- This uses Cell.set_xy, which will emit the swap signal (xy_changed)
 				update = false
-	if had_updates:
+	if do_sort:
 		_sort_cells()
 	emit_signal("moved",v)
 
