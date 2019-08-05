@@ -67,7 +67,7 @@ func _process(delta):
     $Grid2D.move(Vector2(1,0))
 ```
 
-Delegates
+Cell delegates
 ```gdscript
 func _ready():
     ...
