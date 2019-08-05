@@ -1,6 +1,12 @@
 # Infinity Grid (InGrid)
 An infinite scrolling grid for the [Godot](https://godotengine.org) game engine (3.x).
 
+A solid component - excellent for things like:
+* 2D procedural universes and worlds
+* Variated parallax scrolling
+* Inifinite runners/jumpers/fallers
+* <insert your fantastic infinite grid abuse here>
+
 ## Features
 
 * Infinite scrolling
@@ -36,14 +42,18 @@ Use `Grid2D` as a base for any grid (you can also derrive from it).
 Adding multiple grids is supported although performance will depend on various factors
 such as the cell size of each grid, viewport size etc.
 
-The grid will work out of the box but you won't see much unless you do a few things first.
+The grid will work out of the box, with sane defaults, but you won't see much unless you do a few things first.
 
-To initialize the grid with custom values
+To initialize the grid with (optional) custom values
 ```gdscript
 func _ready():
+    # Optional
     $Grid2D.cell_size = Vector2(256,256)
     $Grid2D.delegate = "res://<path/to/custom/MyCustomCell.tscn>"
+    $Grid2D.units = Vector2(1,1)
     $Grid2D.connect("initialized",self,"_on_grid_initialized")
+
+    # Mandatory
     $Grid2D.init()
 
 func _on_grid_initialized():
@@ -66,6 +76,26 @@ func _ready():
 ```
 To make the grid seem infinite you'll want to derrive from the supplied `Cell` type
 and change the cell Node's contents based on the values of the `xy` property.
+
+Cell units
+```gdscript
+func _ready():
+    ...
+    $Grid2D.units = Vector2(1,1)
+    ...
+```
+Cell units can be any `Vector2` based value set you want. The most common value is probably `Vector2(1,1)`.
+Units are arbitrary and solely used to distinguish each cell from it's neighbours in the grid.
+
+Here's a few examples:
+```gdscript
+# Every cell.xy increases by 0.5 on each axis on each cell swap
+$Grid2D.units = Vector2(0.5,0.5)
+
+# Every cell.xy increases by 10 on each axis on each cell swap
+$Grid2D.units = Vector2(10,10)
+```
+What units you choose to act on is your choice - and your choice alone
 
 ## Known issues
 There's currently a few known issues you need to consider before deciding to use this.

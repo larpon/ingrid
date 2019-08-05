@@ -24,9 +24,6 @@ var _cells: Array = []
 var rows: int = 0
 var cols: int = 0
 
-# Currently only here to allow the engine to preload
-var _cell_delegate: PackedScene = preload("./Cell.tscn")
-
 # Current amount of cells spawning
 var _cells_spawning: int = 0
 
@@ -43,6 +40,8 @@ signal initialized
 signal moved(v)
 
 func _ready():
+	# Currently only here to allow the engine to preload
+	preload("./Cell.tscn")
 	connect("resized",self,"_on_resize")
 
 # The grid is considered 'valid' if no cells are spawning, the amount of cells
