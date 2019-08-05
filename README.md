@@ -108,6 +108,6 @@ There's currently a few known issues you need to consider before deciding to use
 
 ## Webring
 Check out my games and other indie dev stuff
-* [non - The First Warp](https://blackgrain.dk/games/non/) (2.5D point-and-click adventure with a genre-first fluid timewarp mechanic)
+* [non - The First Warp](https://blackgrain.dk/games/non/) (2.5D point-and-click adventure with a genre-first fluid time warp mechanic)
 * [Dead Ascend](https://blackgrain.itch.io/dead-ascend) (2D point-and-click-like adventure)
 * [Hammer Bees](https://blackgrain.itch.io/hammer-bees) (2D top-down action puzzler)
