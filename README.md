@@ -20,7 +20,7 @@ In order for the grid to be "infinite" the movement model of the grid is like th
 You move the grid relativly to it's current position.
 
 Each cell's `xy: Vector2` property combined with some clever position swapping is what allow the grid to continue to scroll
-to the end of the universe (given you have enough time on your hands).
+to the end of the universe and beyond (given you have enough time on your hands).
 
 When a grid cell leave the viewport, it's `position` and `xy` value will be swapped to match the next cell's values in the grid
 thus allowing for a illusion of infinity if the cell's content changes based on these values.
