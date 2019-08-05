@@ -5,7 +5,7 @@ A solid component - excellent for things like:
 * 2D procedural universes and worlds
 * Variated parallax scrolling
 * Inifinite runners/jumpers/fallers
-* <insert your fantastic infinite grid abuse here>
+* &lt;insert your fantastic infinite grid abuse here&gt;
 
 ## Features
 
