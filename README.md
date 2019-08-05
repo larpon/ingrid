@@ -8,7 +8,7 @@ An infinite scrolling grid for the [Godot](https://godotengine.org) game engine 
 * Lightweight and fairly optimized GDScript code
 
 ## Known issues
-There' currently a few known issues you need to consider before use.
+There's currently a few known issues you need to consider before use.
 
 * Rigid bodies (`RigidBody2D`) doesn't work well inside grid cells with the grid's relative movement model.
 * Grid auto cell filling when resizing is b0rked when more than one row or column need to be added/removed in one call.
