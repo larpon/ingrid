@@ -54,7 +54,7 @@ Move the grid
 ```gdscript
 func _process(delta):
     # Moves the grid one pixel right, relative to it's current position
-    $Grid2D.move(Vector2(1,0) * delta)
+    $Grid2D.move(Vector2(1,0))
 ```
 
 Delegates
