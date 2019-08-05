@@ -84,7 +84,7 @@ func _ready():
     $Grid2D.units = Vector2(1,1)
     ...
 ```
-Cell units can be any `Vector2` based value set you want. The most common value is probably `Vector2(1,1)`.
+Cell units can be any `Vector2` based value set you want. The most common (and default!) value is probably `Vector2(1,1)`.
 Units are arbitrary and solely used to distinguish each cell from it's neighbours in the grid.
 
 Here's a few examples:
@@ -103,5 +103,5 @@ There's currently a few known issues you need to consider before deciding to use
 * Rigid bodies (`RigidBody2D`) doesn't work well inside grid cells with the grid's relative movement model.
   So you must be creative if you want to use `RigidBody2D` types within grid cells.
 * Grid auto cell filling when resizing is b0rked when more than one row or column need to be added/removed in one call.
-* Only access grid functions from the same thread (Calling from multiple threads wil result in wrong coordinates).
+* Only access grid functions from the same thread (Calling from multiple threads will result in wrong coordinates).
   So don't initialize in `_ready` while moving in `_physics_process`. Lock access with a mutex if you try to do so.
