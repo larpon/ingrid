@@ -7,11 +7,15 @@ A solid component - excellent for things like:
 * Inifinite runners/jumpers/fallers
 * &lt;insert your fantastic infinite grid abuse here&gt;
 
+![Example usage](https://user-images.githubusercontent.com/768942/62859170-a656d600-bcfc-11e9-9a1d-7244c8c367d2.gif)
+
 ## Features
 
-* Infinite scrolling
+* Infinite scrolling!
+* Simple. Only 2 components, simple concept
 * Custom grid cell units (as many bits available as each coordinate in a Vector2 can hold)
-* Lightweight and fairly optimized GDScript code
+* Lightweight
+* Fairly optimized GDScript code
 
 ## Important
 
@@ -44,6 +48,7 @@ such as the cell size of each grid, viewport size etc.
 
 The grid will work out of the box, with sane defaults, but you won't see much unless you do a few things first.
 
+**Initialize**
 To initialize the grid with (optional) custom values
 ```gdscript
 func _ready():
@@ -60,14 +65,14 @@ func _on_grid_initialized():
     $Grid2D.warp(Vector2(0,0))
 ```
 
-Move the grid
+**Move the grid**
 ```gdscript
 func _process(delta):
     # Moves the grid one pixel right, relative to it's current position
     $Grid2D.move(Vector2(1,0))
 ```
 
-Cell delegates
+**Cell delegates**
 ```gdscript
 func _ready():
     ...
@@ -77,7 +82,7 @@ func _ready():
 To make the grid seem infinite you'll want to derrive from the supplied `Cell` type
 and change the cell Node's contents based on the values of the `xy` property.
 
-Cell units
+**Cell units**
 ```gdscript
 func _ready():
     ...
