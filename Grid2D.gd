@@ -40,7 +40,6 @@ signal initialized
 signal moved(v)
 
 func _ready():
-	# Currently only here to allow the engine to preload
 	preload("./Cell.tscn")
 	connect("resized",self,"_on_resize")
 
