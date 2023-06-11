@@ -111,9 +111,6 @@ There's currently a few known issues you need to consider before deciding to use
 * Only access grid functions from the same thread (Calling from multiple threads will result in wrong coordinates).
   So don't initialize in `_ready` while moving in `_physics_process`. Lock access with a mutex if you try to do so.
 
-## Support my work
-[![ko-fi](https://www.ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/larpon)
-
 ## Webring
 Check out my games and other indie dev stuff
 * [non - The First Warp](https://blackgrain.dk/games/non/) (2.5D point-and-click adventure with a genre-first fluid time warp mechanic)

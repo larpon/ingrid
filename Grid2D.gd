@@ -151,7 +151,7 @@ func move(v : Vector2) -> void:
 	
 	if not valid(): return
 	
-	var cell;
+	#var cell;
 	var nx: float; var ny: float
 	
 	var update := false
@@ -311,7 +311,7 @@ func _on_resize() -> void:
 	if auto_fit_cells: _auto_fit_cells()
 
 func clear() -> void:
-	var cell
+	#var cell
 	for cell in _cells:
 		if cell != null:
 			cell.free()
